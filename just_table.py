@@ -7,6 +7,7 @@ This plugin allows you to create easily table.
 
 """
 from __future__ import unicode_literals
+from pelican.generators import ArticlesGenerator, PagesGenerator
 
 import re
 
@@ -70,7 +71,14 @@ def generate_table(generator):
 
     template = Template(table_template)
 
-    for article in generator.articles + generator.drafts:
+    if isinstance(generator, ArticlesGenerator):
+        articles = generator.articles + generator.drafts
+    elif isinstance(generator, PagesGenerator):
+        articles = generator.pages + generator.hidden_pages
+    else:
+        articles = []
+	
+    for article in articles:
         for match in MAIN_REGEX.findall(article._content):
             all_match_str, props, table_data = match
             param = {"ai": 0, "th": 1, "caption": "", "sep": separator}
@@ -109,3 +117,4 @@ def register():
     from pelican import signals
 
     signals.article_generator_finalized.connect(generate_table)
+    signals.page_generator_finalized.connect(generate_table)
